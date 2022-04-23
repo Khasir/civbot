@@ -34,7 +34,7 @@ class DiscordClient:
         incoming = CivJSONObject(incoming)
 
         data = {
-            "content": f"Turn for {convert_username_to_mention(incoming.player_name)}!"
+            "content": f"{incoming.game_name}: Turn {incoming.turn_number} for {convert_username_to_mention(incoming.player_name)}!"
         }
         headers = {
             "Authorization": f"Bot {self.token}",
@@ -69,5 +69,5 @@ def foo():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0", port=8080)
     
