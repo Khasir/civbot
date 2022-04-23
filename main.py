@@ -16,10 +16,16 @@ class CivJSONObject:
         self.turn_number = incoming['value3']
 
 
+def convert_username_to_mention(username: str):
+    user_id = USER_MAPPING.get(username, '')
+    if user_id:
+        return f"<@{user_id}>"
+    return username
+
+
 class DiscordClient:
     def __init__(self, token: str):
         self.token = token
-
 
     def send_message(self, incoming):
         print("received", incoming)
@@ -28,7 +34,7 @@ class DiscordClient:
         incoming = CivJSONObject(incoming)
 
         data = {
-            "content": f"Turn for {incoming.player_name}!"
+            "content": f"Turn for {convert_username_to_mention(incoming.player_name)}!"
         }
         headers = {
             "Authorization": f"Bot {self.token}",
@@ -41,11 +47,15 @@ class DiscordClient:
 
 parser = argparse.ArgumentParser()
 parser.add_argument('discord_token_file')
+parser.add_argument('user_mapping_file')
 args = parser.parse_args()
 
 with open(args.discord_token_file) as file:
     token = file.read().strip()
 print("Token read.")
+with open(args.user_mapping_file) as file:
+    USER_MAPPING = json.load(file)
+print("User mapping read.")
 
 app = Flask(__name__)
 client = DiscordClient(token)
