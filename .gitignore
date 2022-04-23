@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 
 # Custom files
-discord_token.txt
+*token.txt
