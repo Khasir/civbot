@@ -48,7 +48,7 @@ def convert_username_to_mention(username: str):
 def is_valid(payload: str):
     try:
         payload = json.loads(payload)
-    except JSONDecodeError:
+    except json.JSONDecodeError:
         return False
 
     acceptable = "value1", "value2", "value3"
