@@ -16,13 +16,6 @@ class CivJSONObject:
         self.turn_number = incoming['value3']
 
 
-def convert_username_to_mention(username: str):
-    user_id = USER_MAPPING.get(username, '')
-    if user_id:
-        return f"<@{user_id}>"
-    return username
-
-
 class DiscordClient:
     def __init__(self, token: str):
         self.token = token
@@ -45,6 +38,29 @@ class DiscordClient:
         print(result.json())
 
 
+def convert_username_to_mention(username: str):
+    user_id = USER_MAPPING.get(username, '')
+    if user_id:
+        return f"<@{user_id}>"
+    return username
+
+
+def is_valid(payload: str):
+    try:
+        payload = json.loads(payload)
+    except JSONDecodeError:
+        return False
+
+    acceptable = "value1", "value2", "value3"
+    for value in acceptable:
+        if value not in payload:
+            return False
+    for value in payload:
+        if value not in acceptable:
+            return False
+    return True
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('discord_token_file')
 parser.add_argument('user_mapping_file')
@@ -62,7 +78,9 @@ client = DiscordClient(token)
 
 
 @app.route('/',methods=['POST'])
-def foo():
+def process():
+    if not is_valid(request.data):
+        abort(401)
     incoming = json.loads(request.data)
     client.send_message(incoming)
     return "OK"
