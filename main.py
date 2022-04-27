@@ -2,7 +2,7 @@ import argparse
 import json
 
 import requests
-from flask import Flask, request
+from flask import Flask, request, abort
 
 
 CIV_CHANNEL_ID = "967454302455095306"
@@ -16,19 +16,12 @@ class CivJSONObject:
         self.turn_number = incoming['value3']
 
 
-def convert_username_to_mention(username: str):
-    user_id = USER_MAPPING.get(username, '')
-    if user_id:
-        return f"<@{user_id}>"
-    return username
-
-
 class DiscordClient:
     def __init__(self, token: str):
         self.token = token
 
     def send_message(self, incoming):
-        print("received", incoming)
+        print("Received:", incoming)
         with open("temp.txt", 'w') as file:
             file.write(str(incoming))
         incoming = CivJSONObject(incoming)
@@ -41,8 +34,31 @@ class DiscordClient:
             "User-Agent": "CivBot (khasir.hean@gmail.com, v0.1)"
         }
         result = requests.post(f"{ENDPOINT}/channels/{CIV_CHANNEL_ID}/messages", data=data, headers=headers)
-        print(result.status_code)
-        print(result.json())
+        print("Sent message to Discord:")
+        print(json.dumps(result.json(), indent=4))
+
+
+def convert_username_to_mention(username: str):
+    user_id = USER_MAPPING.get(username, '')
+    if user_id:
+        return f"<@{user_id}>"
+    return username
+
+
+def is_valid(payload: str):
+    try:
+        payload = json.loads(payload)
+    except json.JSONDecodeError:
+        return False
+
+    acceptable = "value1", "value2", "value3"
+    for value in acceptable:
+        if value not in payload:
+            return False
+    for value in payload:
+        if value not in acceptable:
+            return False
+    return True
 
 
 parser = argparse.ArgumentParser()
@@ -62,7 +78,10 @@ client = DiscordClient(token)
 
 
 @app.route('/',methods=['POST'])
-def foo():
+def process():
+    if not is_valid(request.data):
+        print("Invalid data:", request.data)
+        abort(401)
     incoming = json.loads(request.data)
     client.send_message(incoming)
     return "OK"
