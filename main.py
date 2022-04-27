@@ -2,7 +2,7 @@ import argparse
 import json
 
 import requests
-from flask import Flask, request
+from flask import Flask, request, abort
 
 
 CIV_CHANNEL_ID = "967454302455095306"
@@ -21,7 +21,7 @@ class DiscordClient:
         self.token = token
 
     def send_message(self, incoming):
-        print("received", incoming)
+        print("Received:", incoming)
         with open("temp.txt", 'w') as file:
             file.write(str(incoming))
         incoming = CivJSONObject(incoming)
@@ -34,8 +34,8 @@ class DiscordClient:
             "User-Agent": "CivBot (khasir.hean@gmail.com, v0.1)"
         }
         result = requests.post(f"{ENDPOINT}/channels/{CIV_CHANNEL_ID}/messages", data=data, headers=headers)
-        print(result.status_code)
-        print(result.json())
+        print("Sent message to Discord:")
+        print(json.dumps(result.json(), indent=4))
 
 
 def convert_username_to_mention(username: str):
@@ -80,6 +80,7 @@ client = DiscordClient(token)
 @app.route('/',methods=['POST'])
 def process():
     if not is_valid(request.data):
+        print("Invalid data:", request.data)
         abort(401)
     incoming = json.loads(request.data)
     client.send_message(incoming)
